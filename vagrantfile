@@ -1,0 +1,64 @@
+Vagrant.require_version ">= 1.1"
+
+Vagrant.configure("2") do |config|
+
+  # get local ip so that we can force chef zero onto a different port per
+  # machine, allowing for multiple simultaneous vagrant up runs
+  local_ip = Socket.ip_address_list.detect{|intf| intf.ipv4_private?}.ip_address
+
+  # virtualbox provider settings
+  config.vm.provider "virtualbox" do |vb|
+    vb.customize ["modifyvm", :id, "--cpus", 2]
+    vb.customize ["modifyvm", :id, "--memory", 2048]
+    vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
+    vb.customize ["modifyvm", :id, "--nicpromisc3", "allow-all"]
+  end
+
+  #################################
+  # Ubuntu 12.04 controller       #
+  #################################
+
+  config.vm.define :ubuntu1204cont do |ubuntu1204cont|
+
+    ubuntu1204cont.vm.hostname = "ubuntu1204cont"
+
+    ubuntu1204cont.vm.box = "opscode-ubuntu-12.04"
+    ubuntu1204cont.vm.box_url = "http://opscode-vm-bento.s3.amazonaws.com/vagrant/virtualbox/opscode_ubuntu-12.04_chef-provisionerless.box"
+
+    ubuntu1204cont.vm.network "forwarded_port", guest: 443, host: 8443     # dashboard-ssl
+    ubuntu1204cont.vm.network "forwarded_port", guest: 8773, host: 8773    # compute-ec2-api
+    ubuntu1204cont.vm.network "forwarded_port", guest: 8774, host: 8774    # compute-api
+    ubuntu1204cont.vm.network "private_network", ip: "192.168.3.60"
+    ubuntu1204cont.vm.network "private_network", ip: "172.16.10.60"
+  end
+
+  #################################
+  # Ubuntu 12.04 compute1         #
+  #################################
+
+  config.vm.define :ubuntu1204comp1 do |ubuntu1204comp1|
+
+    ubuntu1204comp1.vm.hostname = "ubuntu1204comp1"
+
+    ubuntu1204comp1.vm.box = "opscode-ubuntu-12.04"
+    ubuntu1204comp1.vm.box_url = "http://opscode-vm-bento.s3.amazonaws.com/vagrant/virtualbox/opscode_ubuntu-12.04_chef-provisionerless.box"
+
+    ubuntu1204comp1.vm.network "private_network", ip: "192.168.3.61"
+    ubuntu1204comp1.vm.network "private_network", ip: "172.16.10.61"
+  end
+
+  #################################
+  # Ubuntu 12.04 chefsererv       #
+  #################################
+
+  config.vm.define :ubuntu1204chef do |ubuntu1204comp1|
+
+    ubuntu1204comp1.vm.hostname = "ubuntu1204chef"
+
+    ubuntu1204comp1.vm.box = "opscode-ubuntu-12.04"
+    ubuntu1204comp1.vm.box_url = "http://opscode-vm-bento.s3.amazonaws.com/vagrant/virtualbox/opscode_ubuntu-12.04_chef-provisionerless.box"
+
+    ubuntu1204comp1.vm.network "private_network", ip: "192.168.3.62"
+  end
+
+end
